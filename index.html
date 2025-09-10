@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Users CRUD</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 40px auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+    th { text-align: left; }
+    input { padding: 8px; margin-right: 8px; }
+    button { padding: 8px 12px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Users CRUD</h1>
+
+  <div>
+    <input id="name" placeholder="Name" />
+    <input id="email" placeholder="Email" type="email" />
+    <button onclick="addUser()">Add</button>
+    <button onclick="loadUsers()">Refresh</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Name</th><th>Email</th><th>Aksi</th></tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <script>
+    const API = "http://localhost:8081";
+
+    async function loadUsers() {
+      const res = await fetch(`${API}/users`);
+      const data = await res.json();
+      const tbody = document.getElementById("rows");
+      tbody.innerHTML = "";
+      data.forEach(u => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${u.id}</td>
+          <td>${u.name}</td>
+          <td>${u.email}</td>
+          <td>
+            <button onclick="editUser(${u.id}, '${escapeStr(u.name)}', '${escapeStr(u.email)}')">Edit</button>
+            <button onclick="delUser(${u.id})">Delete</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function escapeStr(s){ return String(s).replace(/'/g, "\\'"); }
+
+    async function addUser() {
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      if (!name || !email) return alert("Name & Email wajib diisi");
+
+      await fetch(`${API}/users`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email })
+      }).then(r => {
+        if (!r.ok) return r.text().then(t => { throw new Error(t) });
+      }).catch(e => alert(e.message));
+
+      document.getElementById("name").value = "";
+      document.getElementById("email").value = "";
+      loadUsers();
+    }
+
+    async function editUser(id, currName, currEmail) {
+      const name = prompt("Nama baru:", currName);
+      if (name === null) return;
+      const email = prompt("Email baru:", currEmail);
+      if (email === null) return;
+
+      await fetch(`${API}/users/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email })
+      }).then(r => {
+        if (!r.ok) return r.text().then(t => { throw new Error(t) });
+      }).catch(e => alert(e.message));
+
+      loadUsers();
+    }
+
+    async function delUser(id) {
+      if (!confirm("Yakin hapus user?")) return;
+      await fetch(`${API}/users/${id}`, { method: "DELETE" })
+        .then(r => { if (!r.ok) return r.text().then(t => { throw new Error(t) })})
+        .catch(e => alert(e.message));
+      loadUsers();
+    }
+
+    loadUsers();
+  </script>
+</body>
+</html>
