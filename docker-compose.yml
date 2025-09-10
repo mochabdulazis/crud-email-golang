@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   db:
     image: postgres:17
@@ -19,6 +18,20 @@ services:
     restart: always
     ports:
       - "8080:8080"
+
+  backend:
+    build: ./backend
+    container_name: go_backend
+    restart: always
+    ports:
+      - "8081:8081"
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_USER: admin
+      DB_PASSWORD: admin
+      DB_NAME: tugasdb
 
 volumes:
   postgres_data:

@@ -22,7 +22,7 @@ type User struct {
 
 func main() {
 	// koneksi ke Postgres (samain dengan docker-compose)
-	dsn := "postgres://admin:admin@localhost:5432/tugasdb?sslmode=disable"
+	dsn := "postgres://admin:admin@db:5432/tugasdb?sslmode=disable"
 
 	var err error
 	db, err = sql.Open("postgres", dsn)
